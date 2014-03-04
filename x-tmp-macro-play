@@ -1,0 +1,7 @@
+#!/bin/sh
+DEFAULT='/tmp/x-tmp-macro'
+echo ${1-$DEFAULT}
+cat ${1-$DEFAULT} | node $(dirname $0)/index.js > /tmp/x-tmp-macro.tmp
+chmod +x /tmp/x-tmp-macro.tmp
+/tmp/x-tmp-macro.tmp
+rm /tmp/x-tmp-macro.tmp

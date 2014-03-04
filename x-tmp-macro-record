@@ -1,0 +1,2 @@
+#!/bin/sh
+xmacrorec2 -k 9 > /tmp/x-tmp-macro
