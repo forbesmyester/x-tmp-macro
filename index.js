@@ -65,13 +65,14 @@ var codify_line = function(line) {
 	return false;
 };
 
-var map_to_xdotool_script = function(codified) {
+var map_to_xdotool_script = function(codified, delay) {
 	if (codified === false) { return ''; }
 	var ks = codified.modifiers.concat([codified.key]);
-	return 'xdotool key --clearmodifiers --delay 1 ' + ks.join('+') + "\n";
+	return 'xdotool key --clearmodifiers --delay ' + delay + ' ' + ks.join('+') + "\n";
 };
 
-var transform = function() {
+var transform = function(delay) {
+	if (delay === undefined) { delay = 1; }
 	var current_line = '';
 	process.stdin.resume();
 	process.stdin.on('data', function(data) {
@@ -81,7 +82,7 @@ var transform = function() {
 		for (i=0, l=lines.length; i<l ; i++) {
 			current_line = current_line + lines[i];
 			process.stdout.write(
-				map_to_xdotool_script(codify_line(current_line))
+				map_to_xdotool_script(codify_line(current_line), delay)
 			);
 			if (i !== lines.length-1) {
 				current_line = '';
@@ -95,8 +96,8 @@ var print_help = function() {
 	var help = [
 		"Usage:",
 		"    " + __filename.replace(/.*\//,'') + " create: Starts a xmacro recording process saving the temporary play.",
-		"    " + __filename.replace(/.*\//,'') + " transform: Takes STDIN input from a `xmacrorec2` file and converts it into a series of `xdotool` statements which is outputted to STDOUT.",
-		"    " + __filename.replace(/.*\//,'') + " run [name]: Reads a stored play, transforms the contents using `index.js transform` and runs it.",
+		"    " + __filename.replace(/.*\//,'') + " transform [delay]: Takes STDIN input from a `xmacrorec2` file and converts it into a series of `xdotool` statements which is outputted to STDOUT.",
+		"    " + __filename.replace(/.*\//,'') + " run [name] [delay]: Reads a stored play, transforms the contents using `index.js transform` and runs it.",
 		"    " + __filename.replace(/.*\//,'') + " save [name]: Saves the temporary play into the play name specified."
 		].join("\n");
 	console.log(help);
@@ -106,16 +107,18 @@ var construct_path_from_play_name = function(play_name) {
 	return STORAGE_LOCATION + "/" + play_name + '.x-tmp-macro';
 };
 
-var run = function(play_name) {
+var run = function(play_name, delay) {
 	
 	var commands = [
 			// 'killall xmacrorec2',
-			'cat PLAY_LOCATION | node THIS_SCRIPT transform > TMP_RUN_FILE',
+			'cat PLAY_LOCATION | node THIS_SCRIPT transform DELAY > TMP_RUN_FILE',
 			'chmod +x TMP_RUN_FILE',
 			'TMP_RUN_FILE',
-			'rm TMP_RUN_FILE'
+			//'rm TMP_RUN_FILE'
 		],
 		fs = require('fs');
+
+	if (delay === undefined) { delay = 1; }
 	
 	if (!fs.existsSync(construct_path_from_play_name(play_name))) {
 		fs.writeFileSync(
@@ -132,6 +135,7 @@ var run = function(play_name) {
 		);
 		command = command.replace(/THIS_SCRIPT/, __filename);
 		command = command.replace(/TMP_RUN_FILE/, TMP_RUN_FILE);
+		command = command.replace(/DELAY/, delay);
 		require('child_process').exec(command, function(err) {
 			if (err) {
 				fs.writeFileSync(
@@ -149,7 +153,6 @@ var run = function(play_name) {
 };
 
 var create = function() {
-	console.log("CREATE");
 	var cmd = 'xmacrorec2 -k 9 > ' + construct_path_from_play_name(DEFAULT_RECORD_NAME);
 	
 	require('child_process').exec(cmd, function(err) {
@@ -224,6 +227,6 @@ if (
 	return;
 }
 
-operations[process.argv[2]].apply(process.argv.slice(3));
+operations[process.argv[2]].apply(this, process.argv.slice(4));
 
 }());
