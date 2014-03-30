@@ -1,0 +1,10 @@
+#!/bin/sh
+
+"node /home/fozz/Projects/x-tmp-macro/index.js ui-menu"
+	  Control + Shift + Mod3 + Tab
+
+"node /home/fozz/Projects/x-tmp-macro/index.js create"
+	  Shift + Mod3 + Return
+
+"node /home/fozz/Projects/x-tmp-macro/index.js run"
+	  Mod3 + Return
